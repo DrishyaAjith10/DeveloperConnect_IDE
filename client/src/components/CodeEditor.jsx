@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Box, HStack } from "@chakra-ui/react";
+import { Box, HStack, Text, Button } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
 import LanguageSelector from "./LanguageSelector";
 import { CODE_SNIPPETS } from "../constants";
@@ -7,7 +7,7 @@ import Output from "./Output";
 import { useEffect } from "react";
 import { socket } from "../socket";
 
-const CodeEditor = () => {
+const CodeEditor = ({roomId}) => {
   const editorRef = useRef();
   const [value, setValue] = useState("");
   const [language, setLanguage] = useState("javascript");
@@ -22,7 +22,7 @@ const CodeEditor = () => {
     setValue(CODE_SNIPPETS[language]);
   };
 
-  const roomId = "room1";
+
 
     useEffect(() => {
     socket.emit("join-room", roomId);
@@ -34,10 +34,16 @@ const CodeEditor = () => {
     return () => {
     socket.off("receive-code");
   };
-    },[]);
+    },[roomId]);
 
   return (
     <Box>
+        <Text mb={2} color="gray.400">
+                Room ID: {roomId}
+            </Text>
+            <Button size="xs" onClick={() => navigator.clipboard.writeText(roomId)}>
+                Copy
+            </Button>
       <HStack spacing={4}>
         <Box w="50%">
           <LanguageSelector language={language} onSelect={onSelect} />
@@ -53,7 +59,7 @@ const CodeEditor = () => {
             defaultValue={CODE_SNIPPETS[language]}
             onMount={onMount}
             value={value}
-            onChange={(value) => {
+            onChange={(value) => { 
                 setValue(value);
                 socket.emit("code-change", { roomId, code: value });
             }}

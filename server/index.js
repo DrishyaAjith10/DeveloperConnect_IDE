@@ -1,41 +1,3 @@
-// const express = require("express");
-// const axios = require("axios");
-// const cors = require("cors");
-
-// const app = express();
-
-// app.use(cors()); // allow all origins temporarily
-// app.use(express.json());
-
-
-// app.post("/run", async (req, res) => {
-//   try {
-//     console.log("Incoming body:", req.body);
-
-//     const { language, version, code } = req.body;
-
-//     const response = await axios.post(
-//       "https://emkc.org/api/v2/piston/execute",
-//       {
-//         language,
-//         version,
-//         files: [{ content: code }],
-//       }
-//     );
-
-//     res.json(response.data);
-//   } catch (error) {
-//     console.error("Backend error:", error.response?.data || error.message);
-//     res.status(500).json({ error: error.response?.data || error.message });
-//   }
-// });
-
-
-// app.listen(8000, () => {
-//   console.log("Server running on port 8000");
-// });
-
-
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -54,15 +16,26 @@ const io = new Server(server, {
   },
 });
 
+// 🔥 Store latest code per room
+const rooms = {};
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  // 🏠 Join Room
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
     console.log(`User joined room ${roomId}`);
+
+    // Send existing code if room already has code
+    if (rooms[roomId]) {
+      socket.emit("receive-code", rooms[roomId]);
+    }
   });
 
+  // 📝 Code Change
   socket.on("code-change", ({ roomId, code }) => {
+    rooms[roomId] = code; // Save latest code
     socket.to(roomId).emit("receive-code", code);
   });
 
