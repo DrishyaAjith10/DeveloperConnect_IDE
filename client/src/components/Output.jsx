@@ -8,34 +8,54 @@ const Output = ({ editorRef, language }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  const runCode = async () => {
-    const sourceCode = editorRef.current.getValue();
-    if (!sourceCode) return;
+  const runJavaScript = (code) => {
+  return new Promise((resolve) => {
+    const worker = new Worker(new URL("../jsWorker.js", import.meta.url));
 
-    try {
-      setIsLoading(true);
-      setIsError(false);
+    worker.postMessage(code);
 
-      if (language === "python") {
-        const result = await runPython(sourceCode);
-        setOutput(result.split("\n"));
-      } else {
-        setOutput(["Only Python is supported currently."]);
-      }
+    worker.onmessage = (e) => {
+      resolve(e.data);
+      worker.terminate();
+    };
+  });
+};
 
-    } catch (error) {
-      console.log(error);
-      setIsError(true);
-      toast({
-        title: "Execution Error",
-        description: error.message || "Unable to run code",
-        status: "error",
-        duration: 6000,
-      });
-    } finally {
-      setIsLoading(false);
+const runCode = async () => {
+  const sourceCode = editorRef.current.getValue();
+  if (!sourceCode) return;
+
+  try {
+    setIsLoading(true);
+    setIsError(false);
+
+    if (language === "python") {
+      const result = await runPython(sourceCode);
+      setOutput(result.split("\n"));
+
+    } else if (language === "javascript") {
+      const result = await runJavaScript(sourceCode);
+      setOutput(result.output.split("\n"));
+      setIsError(result.error || false);
+
+    } else {
+      setOutput(["Language not supported."]);
     }
-  };
+
+  } catch (error) {
+    console.log(error);
+    setIsError(true);
+    toast({
+      title: "Execution Error",
+      description: error.message || "Unable to run code",
+      status: "error",
+      duration: 6000,
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <Box w="50%">
