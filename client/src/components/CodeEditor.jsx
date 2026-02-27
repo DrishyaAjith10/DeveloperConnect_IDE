@@ -4,6 +4,8 @@ import { Editor } from "@monaco-editor/react";
 import LanguageSelector from "./LanguageSelector";
 import { CODE_SNIPPETS } from "../constants";
 import Output from "./Output";
+import { useEffect } from "react";
+import { socket } from "../socket";
 
 const CodeEditor = () => {
   const editorRef = useRef();
@@ -19,6 +21,20 @@ const CodeEditor = () => {
     setLanguage(language);
     setValue(CODE_SNIPPETS[language]);
   };
+
+  const roomId = "room1";
+
+    useEffect(() => {
+    socket.emit("join-room", roomId);
+
+    socket.on("receive-code", (code) => {
+        setValue(code);
+    });
+
+    return () => {
+    socket.off("receive-code");
+  };
+    },[]);
 
   return (
     <Box>
@@ -37,7 +53,10 @@ const CodeEditor = () => {
             defaultValue={CODE_SNIPPETS[language]}
             onMount={onMount}
             value={value}
-            onChange={(value) => setValue(value)}
+            onChange={(value) => {
+                setValue(value);
+                socket.emit("code-change", { roomId, code: value });
+            }}
           />
         </Box>
         <Output editorRef={editorRef} language={language} />
