@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Button, Text, useToast } from "@chakra-ui/react";
-import { executeCode } from "../api";
+import { runPython } from "../pythonRunner";
 
 const Output = ({ editorRef, language }) => {
   const toast = useToast();
@@ -11,15 +11,23 @@ const Output = ({ editorRef, language }) => {
   const runCode = async () => {
     const sourceCode = editorRef.current.getValue();
     if (!sourceCode) return;
+
     try {
       setIsLoading(true);
-      const { run: result } = await executeCode(language, sourceCode);
-      setOutput(result.output.split("\n"));
-      result.stderr ? setIsError(true) : setIsError(false);
+      setIsError(false);
+
+      if (language === "python") {
+        const result = await runPython(sourceCode);
+        setOutput(result.split("\n"));
+      } else {
+        setOutput(["Only Python is supported currently."]);
+      }
+
     } catch (error) {
       console.log(error);
+      setIsError(true);
       toast({
-        title: "An error occurred.",
+        title: "Execution Error",
         description: error.message || "Unable to run code",
         status: "error",
         duration: 6000,
@@ -43,6 +51,7 @@ const Output = ({ editorRef, language }) => {
       >
         Run Code
       </Button>
+
       <Box
         height="75vh"
         p={2}
@@ -58,4 +67,5 @@ const Output = ({ editorRef, language }) => {
     </Box>
   );
 };
+
 export default Output;
