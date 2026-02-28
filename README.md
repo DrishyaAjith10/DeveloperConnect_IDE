@@ -57,7 +57,11 @@ Frontend → Backend
 
 Live Link: https://developerconnectide.netlify.app/
 
----
+## Image
+![Alt Text](client/public/ss1.png)
+![Alt Text](client/public/ss2.png)
+![Alt Text](client/public/ss3.png)
+![Alt Text](client/public/ss4.png)
 
 ## 📦 Installation
 
